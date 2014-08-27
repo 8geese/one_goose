@@ -84,6 +84,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# TASTYPIE specific
+
+TASTYPIE_DEFAULT_FORMATS = ['json']
+
 try:
   from .local_settings import *
 except ImportError:
