@@ -25,14 +25,14 @@ class CreatorWriteOnlyAuthorization(Authorization):
 
     def update_list(self, object_list, bundle):
         allowed = [obj for obj in object_list if obj.creator == bundle.request.user]
-
         return allowed
 
     def update_detail(self, object_list, bundle):
         return bundle.obj.creator == bundle.request.user
 
     def delete_list(self, object_list, bundle):
-        return bundle.obj.creator == bundle.request.user
+        allowed = [obj for obj in object_list if obj.creator == bundle.request.user]
+        return allowed
 
     def delete_detail(self, object_list, bundle):
         return bundle.obj.creator == bundle.request.user

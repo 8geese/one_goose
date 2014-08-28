@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from tastypie.exceptions import BadRequest
+from tastypie.exceptions import BadRequest, Unauthorized
 from tastypie.resources import ModelResource
 from django.contrib.auth.models import User
 from tastypie.validation import CleanedDataFormValidation
@@ -10,7 +10,7 @@ from tastypie.authentication import BasicAuthentication, MultiAuthentication, Se
 
 from one_goose.models import Goal, Checkin
 from .forms import GoalForm, CheckinForm
-from .validation import ModelFormValidation
+from .validation import ModelFormValidation, uri_to_pk
 from .authorization import CreatorWriteOnlyAuthorization, UserMatchWriteOnlyAuthorization
 
 
@@ -20,15 +20,16 @@ class UserResource(ModelResource):
         resource_name = 'user'
         excludes = ['email', 'password', 'is_active', 'is_staff', 'is_superuser']
         # the fall-through for authentication needs to go last or it will match you as an AnonymousUser and give up
-        authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication(), Authentication())
+        authentication = MultiAuthentication(BasicAuthentication(), Authentication())
         validation = CleanedDataFormValidation(form_class=UserChangeForm)
         authorization = UserMatchWriteOnlyAuthorization()
 
     def obj_create(self, bundle, **kwargs):
         try:
-            bundle = super(UserResource, self).obj_create(bundle, **kwargs)
-            bundle.obj.set_password(bundle.data.get('password'))
-            bundle.obj.save()
+            # tried doing this with calling super.obj_create and then calling set_password, but it never seemed to
+            # set the password correctly.  WTF
+            user = User.objects.create_user(bundle.data.get('username'), bundle.data.get('email', ''), bundle.data.get('password'))
+            bundle.obj = user
         except IntegrityError:
             raise BadRequest('That username already exists')
         return bundle
@@ -39,16 +40,17 @@ class GoalResource(ModelResource):
 
     class Meta:
         queryset = Goal.objects.all()
+        allowed_methods = ['get', 'post', 'put', 'delete']
         resource_name = 'goal'
         serializer = Serializer()
         authorization = CreatorWriteOnlyAuthorization()
-        authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
+        authentication = MultiAuthentication(BasicAuthentication())
         validation = CleanedDataFormValidation(form_class=GoalForm)
 
-    def hydrate(self, bundle, request=None):
-        # auto set creator.  note to self, hydrate is kinda like a pre_save in DRF
-        bundle.obj.creator = User.objects.get(pk=bundle.request.user.id)
-        return bundle
+    def obj_create(self, bundle, **kwargs):
+        # okay, finally found the pre create hook.  :(
+
+        return super(GoalResource, self).obj_create(bundle, creator=bundle.request.user)
 
 
 class CheckinResource(ModelResource):
@@ -60,13 +62,19 @@ class CheckinResource(ModelResource):
         resource_name = 'checkin'
         serializer = Serializer()
         authorization = CreatorWriteOnlyAuthorization()
-        authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
+        authentication = MultiAuthentication(BasicAuthentication())
 
         @property
         def validation(self):
             return ModelFormValidation(form_class=CheckinForm, resource=CheckinResource)
 
-    def hydrate(self, bundle, request=None):
-        # auto set creator
-        bundle.obj.creator = User.objects.get(pk=bundle.request.user.id)
-        return bundle
+    def obj_create(self, bundle, **kwargs):
+        # this is ridiculous, i must be misunderstanding something, unless it has something to do with the weird hacks
+        # to validate
+
+        parent = Goal.objects.get(pk=uri_to_pk(bundle.data['goal']))
+
+        if parent.creator != bundle.request.user:
+            raise Unauthorized("You're checking in to a goal you don't own")
+
+        return super(CheckinResource, self).obj_create(bundle, creator=bundle.request.user, goal=parent)

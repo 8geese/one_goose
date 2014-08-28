@@ -14,42 +14,41 @@ error from giving it the foreign key url
 from django.forms import ModelChoiceField
 from tastypie.validation import FormValidation
 
+def uri_to_pk(uri):
+    """
+    Returns the integer PK part of a URI.
+
+    Assumes ``/api/v1/resource/123/`` format. If conversion fails, this just
+    returns the URI unmodified.
+
+    Also handles lists of URIs
+    """
+
+    if uri is None:
+        return None
+
+    # convert everything to lists
+    multiple = not isinstance(uri, basestring)
+    uris = uri if multiple else [uri]
+
+    # handle all passed URIs
+    converted = []
+    for one_uri in uris:
+        try:
+            # hopefully /api/v1/<resource_name>/<pk>/
+            converted.append(int(one_uri.split('/')[-2]))
+        except (IndexError, ValueError):
+            raise ValueError(
+                "URI %s could not be converted to PK integer." % one_uri)
+
+    # convert back to original format
+    return converted if multiple else converted[0]
 
 class ModelFormValidation(FormValidation):
     """
     Override tastypie's standard ``FormValidation`` since this does not care
     about URI to PK conversion for ``ToOneField`` or ``ToManyField``.
     """
-
-    def uri_to_pk(self, uri):
-        """
-        Returns the integer PK part of a URI.
-
-        Assumes ``/api/v1/resource/123/`` format. If conversion fails, this just
-        returns the URI unmodified.
-
-        Also handles lists of URIs
-        """
-
-        if uri is None:
-            return None
-
-        # convert everything to lists
-        multiple = not isinstance(uri, basestring)
-        uris = uri if multiple else [uri]
-
-        # handle all passed URIs
-        converted = []
-        for one_uri in uris:
-            try:
-                # hopefully /api/v1/<resource_name>/<pk>/
-                converted.append(int(one_uri.split('/')[-2]))
-            except (IndexError, ValueError):
-                raise ValueError(
-                    "URI %s could not be converted to PK integer." % one_uri)
-
-        # convert back to original format
-        return converted if multiple else converted[0]
 
     def is_valid(self, bundle, request=None):
         data = bundle.data
@@ -66,7 +65,7 @@ class ModelFormValidation(FormValidation):
 
         for field in relation_fields:
             if field in data:
-                data[field] = self.uri_to_pk(data[field])
+                data[field] = uri_to_pk(data[field])
 
         # validate and return messages on error
         form = self.form_class(data)

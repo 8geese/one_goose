@@ -10,11 +10,17 @@ class UserResourceTest(ResourceTestCase):
     def setUp(self):
         super(UserResourceTest, self).setUp()
 
-        # grab first fixture user (for edits etc)
-        self.user_1 = User.objects.get(id=1)
-        self.user_2 = User.objects.get(id=2)
+        #create an extra pair of user because salted password are hard
+        self.username = 'test0r'
+        self.password = 'pass'
+        self.user = User.objects.create_user(self.username, 'test0r@example.com', self.password)
 
-        self.user_url = '/api/v1/user/{0}/'.format(self.user_1.pk)
+        self.username_2 = 'test0r2'
+        self.password_2 = 'pass'
+        self.user_2 = User.objects.create_user(self.username_2, 'test0r2@example.com', self.password_2)
+
+        self.user_url = '/api/v1/user/{0}/'.format(self.user.pk)
+        self.user_url_2 = '/api/v1/user/{0}/'.format(self.user_2.pk)
         self.list_url = '/api/v1/user/'
 
         self.patch_data = {
@@ -26,11 +32,13 @@ class UserResourceTest(ResourceTestCase):
         self.maxDiff = None
 
 
+
+
     def get_credentials(self):
-        return self.create_basic(username=self.user_1.username, password=self.user_1.password)
+        return self.create_basic(username=self.username, password=self.password)
 
     def get_credentials_2(self):
-        return self.create_basic(username=self.user_2.username, password=self.user_2.password)
+        return self.create_basic(username=self.username_2, password=self.password_2)
 
     def test_get_list(self):
         resp = self.api_client.get(self.list_url, format='json')
@@ -38,7 +46,7 @@ class UserResourceTest(ResourceTestCase):
         self.assertValidJSONResponse(resp)
 
         # 3 users in fixture
-        self.assertEqual(len(self.deserialize(resp)['objects']), 3)
+        self.assertEqual(len(self.deserialize(resp)['objects']), 5)
 
         # my first test user
         self.assertKeys(self.deserialize(resp)['objects'][0], ['date_joined', 'id', 'first_name', 'last_name', 'username', 'resource_uri', 'last_login'])
@@ -54,21 +62,26 @@ class UserResourceTest(ResourceTestCase):
         # We use ``assertKeys`` here to just verify the keys, not all the data.
         self.assertKeys(self.deserialize(resp), ['date_joined', 'id', 'first_name', 'last_name', 'username', 'resource_uri', 'last_login'])
 
-        self.assertEqual(self.deserialize(resp)['username'], 'caffodian')
+        self.assertEqual(self.deserialize(resp)['username'], self.username)
 
 
-    def test_patch_unauthorized(self):
+    def test_put_unauthorized(self):
         # no auth
-        resp = self.api_client.patch(self.user_url, format='json', data={"first_name": "asdf"})
+        resp = self.api_client.put(self.user_url, format='json', data={"first_name": "asdf"})
         self.assertHttpUnauthorized(resp)
 
         # wrong user auth
-        resp_2 = self.api_client.patch(self.user_url, format='json', data={"first_name": "asdf"}, authentication=self.get_credentials_2)
+        resp_2 = self.api_client.put(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials_2())
         self.assertHttpUnauthorized(resp_2)
 
-    def test_delete_not_allowed(self):
-        resp = self.api_client.delete(self.user_url, format='json', authentication=self.get_credentials)
+    def test_put(self):
+        # auth as owner
+        resp = self.api_client.put(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials())
+        self.assertHttpAccepted(resp)
 
+    def test_delete_not_allowed(self):
+        #should not delete even if you are the user
+        resp = self.api_client.delete(self.user_url, format='json', authentication=self.get_credentials())
         self.assertHttpUnauthorized(resp)
 
     def test_post_user(self):
@@ -85,6 +98,13 @@ class UserResourceTest(ResourceTestCase):
         # TODO look more into last() to confirm it's to my understanding that it always is last inserted
         user = User.objects.last()
         self.assertEquals(user.username, username)
+
+    def test_post_user_dupe_username(self):
+        resp = self.api_client.post(self.list_url, format='json', data={
+            'username': self.username,
+            'password': 'asdffasdasdsa'
+        })
+        self.assertHttpBadRequest(resp)
 
 
 
