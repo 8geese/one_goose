@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from tastypie.validation import CleanedDataFormValidation, FormValidation
 from django.contrib.auth.forms import UserChangeForm
 from .forms import GoalForm, CheckinForm
+from .validation import ModelFormValidation
 from tastypie import fields
 from tastypie.serializers import Serializer
 from tastypie.authentication import BasicAuthentication, MultiAuthentication, SessionAuthentication, Authentication
@@ -57,9 +58,10 @@ class CheckinResource(ModelResource):
         serializer = Serializer()
         authorization = CreatorWriteOnlyAuthorization()
         authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
+
         @property
         def validation(self):
-            return FormValidation(form_class=CheckinForm, resource=CheckinResource)
+            return ModelFormValidation(form_class=CheckinForm, resource=CheckinResource)
 
     def hydrate(self, bundle, request=None):
         # auto set creator
