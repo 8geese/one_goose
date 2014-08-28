@@ -89,6 +89,6 @@ STATIC_URL = '/static/'
 TASTYPIE_DEFAULT_FORMATS = ['json']
 
 try:
-  from .local_settings import *
+    from .local_settings import *
 except ImportError:
-  pass
+    pass

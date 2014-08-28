@@ -1,16 +1,18 @@
 from django.db import IntegrityError
 from tastypie.exceptions import BadRequest
 from tastypie.resources import ModelResource
-from one_goose.models import Goal, Checkin
 from django.contrib.auth.models import User
-from tastypie.validation import CleanedDataFormValidation, FormValidation
+from tastypie.validation import CleanedDataFormValidation
 from django.contrib.auth.forms import UserChangeForm
-from .forms import GoalForm, CheckinForm
-from .validation import ModelFormValidation
 from tastypie import fields
 from tastypie.serializers import Serializer
 from tastypie.authentication import BasicAuthentication, MultiAuthentication, SessionAuthentication, Authentication
+
+from one_goose.models import Goal, Checkin
+from .forms import GoalForm, CheckinForm
+from .validation import ModelFormValidation
 from .authorization import CreatorWriteOnlyAuthorization, UserMatchWriteOnlyAuthorization
+
 
 class UserResource(ModelResource):
     class Meta:
@@ -31,6 +33,7 @@ class UserResource(ModelResource):
             raise BadRequest('That username already exists')
         return bundle
 
+
 class GoalResource(ModelResource):
     creator = fields.ForeignKey(UserResource, 'creator')
 
@@ -42,11 +45,11 @@ class GoalResource(ModelResource):
         authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
         validation = CleanedDataFormValidation(form_class=GoalForm)
 
-
     def hydrate(self, bundle, request=None):
         # auto set creator.  note to self, hydrate is kinda like a pre_save in DRF
-        bundle.obj.creator = User.objects.get(pk = bundle.request.user.id)
+        bundle.obj.creator = User.objects.get(pk=bundle.request.user.id)
         return bundle
+
 
 class CheckinResource(ModelResource):
     creator = fields.ForeignKey(UserResource, 'creator')
@@ -65,5 +68,5 @@ class CheckinResource(ModelResource):
 
     def hydrate(self, bundle, request=None):
         # auto set creator
-        bundle.obj.creator = User.objects.get(pk = bundle.request.user.id)
+        bundle.obj.creator = User.objects.get(pk=bundle.request.user.id)
         return bundle
