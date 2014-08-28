@@ -27,7 +27,7 @@ class UserResource(ModelResource):
     def obj_create(self, bundle, **kwargs):
         try:
             # tried doing this with calling super.obj_create and then calling set_password, but it never seemed to
-            # set the password correctly.  WTF
+            # set the password correctly.  WTF.  probably not a good use of time to investigate
             user = User.objects.create_user(bundle.data.get('username'), bundle.data.get('email', ''), bundle.data.get('password'))
             bundle.obj = user
         except IntegrityError:
