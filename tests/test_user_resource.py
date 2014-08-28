@@ -99,12 +99,20 @@ class UserResourceTest(ResourceTestCase):
         user = User.objects.last()
         self.assertEquals(user.username, username)
 
+        # hit an auth root to see if you are authed
+
+        auth_resp = self.api_client.get('/api/v1/goal/', format='json', authentication=self.create_basic(username=username, password=password))
+
+        self.assertHttpOK(auth_resp)
+
     def test_post_user_dupe_username(self):
         resp = self.api_client.post(self.list_url, format='json', data={
             'username': self.username,
             'password': 'asdffasdasdsa'
         })
         self.assertHttpBadRequest(resp)
+
+
 
 
 
