@@ -88,6 +88,17 @@ STATIC_URL = '/static/'
 
 TASTYPIE_DEFAULT_FORMATS = ['json']
 
+if os.environ.get('ENV') == 'heroku':
+    import herokuify
+
+    from herokuify.common import *
+
+    from herokuify.mail.mailgun import *
+    from herokuify.mail.sendgrid import *
+
+    DATABASES = herokuify.get_db_config()
+    CACHES = herokuify.get_cache_config()
+
 try:
     from .local_settings import *
 except ImportError:
