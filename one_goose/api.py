@@ -73,9 +73,6 @@ class CheckinResource(ModelResource):
             return ModelFormValidation(form_class=CheckinForm, resource=CheckinResource)
 
     def obj_create(self, bundle, **kwargs):
-        # this is ridiculous, i must be misunderstanding something, unless it has something to do with the weird hacks
-        # to validate
-
         if bundle.data.get('goal'):
             parent = Goal.objects.get(pk=uri_to_pk(bundle.data['goal']))
 
@@ -87,7 +84,6 @@ class CheckinResource(ModelResource):
         return super(CheckinResource, self).obj_create(bundle, creator=bundle.request.user, goal=parent)
 
     def obj_update(self, bundle, **kwargs):
-        # bump off the id from kwargs so this doesn't call create.  very confuse.
         try:
             bundle.data['pk'] = kwargs.get('pk')
         except:

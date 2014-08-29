@@ -20,7 +20,6 @@ class Checkin(models.Model):
     goal = models.ForeignKey('Goal', related_name='checkins', blank=False)
     modified = models.DateTimeField(editable=False, auto_now=True)
     message = models.CharField(max_length=140, null=False)
-    # TODO check if the checkin creator is always the goal creator
     creator = models.ForeignKey('auth.User', related_name='checkins', on_delete=models.CASCADE)
     created = models.DateTimeField(editable=False, auto_now_add=True)
 
