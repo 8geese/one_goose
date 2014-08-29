@@ -4,6 +4,10 @@ http://onegoose.herokuapp.com/api/v1/
 
 ## notes
 
+### authentication
+The API only supports Basic authentication.  Register a user either through `POST`ing to the user endpoint, 
+or manually through the admin.  
+
 ### running on heroku
 
 1. Create a heroku app
