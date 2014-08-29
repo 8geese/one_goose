@@ -14,6 +14,7 @@ error from giving it the foreign key url
 from django.forms import ModelChoiceField
 from tastypie.validation import FormValidation
 
+
 def uri_to_pk(uri):
     """
     Returns the integer PK part of a URI.
@@ -43,6 +44,7 @@ def uri_to_pk(uri):
 
     # convert back to original format
     return converted if multiple else converted[0]
+
 
 class ModelFormValidation(FormValidation):
     """

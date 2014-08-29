@@ -51,7 +51,6 @@ class UserMatchWriteOnlyAuthorization(Authorization):
         return object_list
 
     def create_detail(self, object_list, bundle):
-
         return bundle.obj.id == bundle.request.user.id
 
     def update_list(self, object_list, bundle):
@@ -59,7 +58,6 @@ class UserMatchWriteOnlyAuthorization(Authorization):
         raise Unauthorized("Sorry, no batch edits.")
 
     def update_detail(self, object_list, bundle):
-
         return bundle.obj.id == bundle.request.user.id
 
     def delete_list(self, object_list, bundle):

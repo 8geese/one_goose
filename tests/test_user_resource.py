@@ -1,16 +1,14 @@
 from django.contrib.auth.models import User
 from tastypie.test import ResourceTestCase
-from one_goose.api import UserResource
 
 
 class UserResourceTest(ResourceTestCase):
-
     fixtures = ['users.json']
 
     def setUp(self):
         super(UserResourceTest, self).setUp()
 
-        #create an extra pair of user because salted password are hard
+        # create an extra pair of user because salted password are hard
         self.username = 'test0r'
         self.password = 'pass'
         self.user = User.objects.create_user(self.username, 'test0r@example.com', self.password)
@@ -25,14 +23,11 @@ class UserResourceTest(ResourceTestCase):
 
         self.patch_data = {
             "password": "asdfhdsaudhas",
-             "first_name": "asdf",
-             "last_name": "wat"
+            "first_name": "asdf",
+            "last_name": "wat"
         }
 
         self.maxDiff = None
-
-
-
 
     def get_credentials(self):
         return self.create_basic(username=self.username, password=self.password)
@@ -49,9 +44,9 @@ class UserResourceTest(ResourceTestCase):
         self.assertEqual(len(self.deserialize(resp)['objects']), 5)
 
         # my first test user
-        self.assertKeys(self.deserialize(resp)['objects'][0], ['date_joined', 'id', 'first_name', 'last_name', 'username', 'resource_uri', 'last_login'])
+        self.assertKeys(self.deserialize(resp)['objects'][0], ['date_joined', 'id', 'first_name', 'last_name',
+                                                               'username', 'resource_uri', 'last_login'])
         self.assertEqual(self.deserialize(resp)['objects'][0]['username'], 'caffodian')
-
 
     def test_get_detail(self):
         # should work with no auth
@@ -60,10 +55,10 @@ class UserResourceTest(ResourceTestCase):
         self.assertValidJSONResponse(resp)
 
         # We use ``assertKeys`` here to just verify the keys, not all the data.
-        self.assertKeys(self.deserialize(resp), ['date_joined', 'id', 'first_name', 'last_name', 'username', 'resource_uri', 'last_login'])
+        self.assertKeys(self.deserialize(resp), ['date_joined', 'id', 'first_name', 'last_name', 'username',
+                                                 'resource_uri', 'last_login'])
 
         self.assertEqual(self.deserialize(resp)['username'], self.username)
-
 
     def test_patch_unauthorized(self):
         # no auth
@@ -71,16 +66,18 @@ class UserResourceTest(ResourceTestCase):
         self.assertHttpUnauthorized(resp)
 
         # wrong user auth
-        resp_2 = self.api_client.patch(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials_2())
+        resp_2 = self.api_client.patch(self.user_url, format='json', data=self.patch_data,
+                                       authentication=self.get_credentials_2())
         self.assertHttpUnauthorized(resp_2)
 
     def test_patch(self):
         # auth as owner
-        resp = self.api_client.patch(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials())
+        resp = self.api_client.patch(self.user_url, format='json', data=self.patch_data,
+                                     authentication=self.get_credentials())
         self.assertHttpAccepted(resp)
 
     def test_delete_not_allowed(self):
-        #should not delete even if you are the user
+        # should not delete even if you are the user
         resp = self.api_client.delete(self.user_url, format='json', authentication=self.get_credentials())
         self.assertHttpMethodNotAllowed(resp)
 
@@ -101,7 +98,8 @@ class UserResourceTest(ResourceTestCase):
 
         # hit an auth root to see if you are authed
 
-        auth_resp = self.api_client.get('/api/v1/goal/', format='json', authentication=self.create_basic(username=username, password=password))
+        auth_resp = self.api_client.get('/api/v1/goal/', format='json',
+                                        authentication=self.create_basic(username=username, password=password))
 
         self.assertHttpOK(auth_resp)
 

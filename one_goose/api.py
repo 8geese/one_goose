@@ -6,7 +6,7 @@ from tastypie.validation import CleanedDataFormValidation
 from django.contrib.auth.forms import UserChangeForm
 from tastypie import fields
 from tastypie.serializers import Serializer
-from tastypie.authentication import BasicAuthentication, MultiAuthentication, SessionAuthentication, Authentication
+from tastypie.authentication import BasicAuthentication, MultiAuthentication, Authentication
 
 from one_goose.models import Goal, Checkin
 from .forms import GoalForm, CheckinForm

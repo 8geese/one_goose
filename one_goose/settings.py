@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -90,11 +91,6 @@ TASTYPIE_DEFAULT_FORMATS = ['json']
 
 if os.environ.get('ENV') == 'heroku':
     import herokuify
-
-    from herokuify.common import *
-
-    from herokuify.mail.mailgun import *
-    from herokuify.mail.sendgrid import *
 
     DATABASES = herokuify.get_db_config()
     CACHES = herokuify.get_cache_config()

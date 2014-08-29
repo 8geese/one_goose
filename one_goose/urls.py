@@ -12,7 +12,6 @@ v1_api.register(GoalResource())
 v1_api.register(CheckinResource())
 v1_api.register(UserResource())
 
-
 urlpatterns = patterns(
     '',
     url(r'^admin/', include(admin.site.urls)),
