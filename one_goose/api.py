@@ -1,5 +1,6 @@
 from django.db import IntegrityError
-from tastypie.exceptions import BadRequest, Unauthorized
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie.http import HttpUnauthorized
 from tastypie.resources import ModelResource
 from django.contrib.auth.models import User
 from tastypie.validation import CleanedDataFormValidation
@@ -79,7 +80,7 @@ class CheckinResource(ModelResource):
             parent = Goal.objects.get(pk=uri_to_pk(bundle.data['goal']))
 
             if parent.creator != bundle.request.user:
-                raise Unauthorized("You're checking in to a goal you don't own")
+                raise ImmediateHttpResponse(HttpUnauthorized("You're checking in to a goal you don't own"))
         else:
             parent = bundle.obj.goal
 

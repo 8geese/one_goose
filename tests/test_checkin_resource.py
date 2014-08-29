@@ -104,6 +104,19 @@ class CheckinResourceTest(ResourceTestCase):
         self.assertEquals(checkin.message, "thisisatest")
         self.assertEquals(checkin.creator, self.user)
 
+    def test_cannot_checkin_to_others_goals(self):
+        checkin_count = Checkin.objects.count()
+        resp = self.api_client.post(self.list_url, format='json', authentication=self.get_other_credentials(), data={
+            "name": "testname",
+            "message": "thisisatest",
+            "goal": self.goal_url.format(self.test_goal.id)
+        })
+
+        self.assertHttpUnauthorized(resp)
+        # looks dumb but check it hasn't been posted
+        post_request_count = Checkin.objects.count()
+        self.assertEquals(checkin_count, post_request_count)
+
     def test_non_auth_delete(self):
         count = Checkin.objects.count()
         resp = self.api_client.delete(self.item_url.format(self.test_checkin.id), format='json',
@@ -119,7 +132,6 @@ class CheckinResourceTest(ResourceTestCase):
 
         self.assertHttpAccepted(resp)
         self.assertEquals(Checkin.objects.count(), (count - 1))
-
 
 
 
