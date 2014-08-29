@@ -65,24 +65,24 @@ class UserResourceTest(ResourceTestCase):
         self.assertEqual(self.deserialize(resp)['username'], self.username)
 
 
-    def test_put_unauthorized(self):
+    def test_patch_unauthorized(self):
         # no auth
-        resp = self.api_client.put(self.user_url, format='json', data={"first_name": "asdf"})
+        resp = self.api_client.patch(self.user_url, format='json', data={"first_name": "asdf"})
         self.assertHttpUnauthorized(resp)
 
         # wrong user auth
-        resp_2 = self.api_client.put(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials_2())
+        resp_2 = self.api_client.patch(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials_2())
         self.assertHttpUnauthorized(resp_2)
 
-    def test_put(self):
+    def test_patch(self):
         # auth as owner
-        resp = self.api_client.put(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials())
+        resp = self.api_client.patch(self.user_url, format='json', data=self.patch_data, authentication=self.get_credentials())
         self.assertHttpAccepted(resp)
 
     def test_delete_not_allowed(self):
         #should not delete even if you are the user
         resp = self.api_client.delete(self.user_url, format='json', authentication=self.get_credentials())
-        self.assertHttpUnauthorized(resp)
+        self.assertHttpMethodNotAllowed(resp)
 
     def test_post_user(self):
         username = 'asdjfhfhuf'

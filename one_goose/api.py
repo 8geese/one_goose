@@ -21,6 +21,7 @@ class UserResource(ModelResource):
         excludes = ['email', 'password', 'is_active', 'is_staff', 'is_superuser']
         # the fall-through for authentication needs to go last or it will match you as an AnonymousUser and give up
         authentication = MultiAuthentication(BasicAuthentication(), Authentication())
+        allowed_methods = ['get', 'post', 'patch']
         validation = CleanedDataFormValidation(form_class=UserChangeForm)
         authorization = UserMatchWriteOnlyAuthorization()
 
@@ -28,7 +29,8 @@ class UserResource(ModelResource):
         try:
             # tried doing this with calling super.obj_create and then calling set_password, but it never seemed to
             # set the password correctly.  WTF.  probably not a good use of time to investigate
-            user = User.objects.create_user(bundle.data.get('username'), bundle.data.get('email', ''), bundle.data.get('password'))
+            user = User.objects.create_user(bundle.data.get('username'), bundle.data.get('email', ''),
+                                            bundle.data.get('password'))
             bundle.obj = user
         except IntegrityError:
             raise BadRequest('That username already exists')
@@ -40,7 +42,7 @@ class GoalResource(ModelResource):
 
     class Meta:
         queryset = Goal.objects.all()
-        allowed_methods = ['get', 'post', 'put', 'delete']
+        allowed_methods = ['get', 'post', 'patch', 'delete']
         resource_name = 'goal'
         serializer = Serializer()
         authorization = CreatorWriteOnlyAuthorization()
@@ -59,6 +61,7 @@ class CheckinResource(ModelResource):
 
     class Meta:
         queryset = Checkin.objects.all()
+        allowed_methods = ['get', 'post', 'patch', 'delete']
         resource_name = 'checkin'
         serializer = Serializer()
         authorization = CreatorWriteOnlyAuthorization()
@@ -72,9 +75,21 @@ class CheckinResource(ModelResource):
         # this is ridiculous, i must be misunderstanding something, unless it has something to do with the weird hacks
         # to validate
 
-        parent = Goal.objects.get(pk=uri_to_pk(bundle.data['goal']))
+        if bundle.data.get('goal'):
+            parent = Goal.objects.get(pk=uri_to_pk(bundle.data['goal']))
 
-        if parent.creator != bundle.request.user:
-            raise Unauthorized("You're checking in to a goal you don't own")
+            if parent.creator != bundle.request.user:
+                raise Unauthorized("You're checking in to a goal you don't own")
+        else:
+            parent = bundle.obj.goal
 
         return super(CheckinResource, self).obj_create(bundle, creator=bundle.request.user, goal=parent)
+
+    def obj_update(self, bundle, **kwargs):
+        # bump off the id from kwargs so this doesn't call create.  very confuse.
+        try:
+            bundle.data['pk'] = kwargs.get('pk')
+        except:
+            raise BadRequest("cant get id somehow")
+
+        return super(CheckinResource, self).obj_update(bundle, **kwargs)

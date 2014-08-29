@@ -25,7 +25,7 @@ class GoalResourceTest(ResourceTestCase):
             "creator": self.user
         })
 
-        self.put_data = {
+        self.patch_data = {
             "description": "newer description"
         }
 
@@ -74,19 +74,19 @@ class GoalResourceTest(ResourceTestCase):
         self.assertEquals(deserialized['id'], 1)
 
 
-    def test_non_auth_put(self):
-        resp = self.api_client.put(self.item_url.format(self.test_item.id), format='json',
-                                   authentication=self.get_other_credentials(), data=self.put_data)
+    def test_non_auth_patch(self):
+        resp = self.api_client.patch(self.item_url.format(self.test_item.id), format='json',
+                                   authentication=self.get_other_credentials(), data=self.patch_data)
         self.assertHttpUnauthorized(resp)
         self.assertEquals(Goal.objects.get(pk=self.test_item.id).description, self.test_item.description)
 
 
-    def test_put(self):
-        resp = self.api_client.put(self.item_url.format(self.test_item.id), format='json',
-                                   authentication=self.get_credentials(), data=self.put_data)
+    def test_patch(self):
+        resp = self.api_client.patch(self.item_url.format(self.test_item.id), format='json',
+                                   authentication=self.get_credentials(), data=self.patch_data)
 
         self.assertHttpAccepted(resp)
-        self.assertEquals(Goal.objects.get(pk=self.test_item.id).description, self.put_data['description'])
+        self.assertEquals(Goal.objects.get(pk=self.test_item.id).description, self.patch_data['description'])
 
 
     def test_post(self):
